@@ -42,6 +42,18 @@ angular.module('hello', [ 'ngRoute' ]).config(function($routeProvider, $httpProv
 
             };
             
+            
+			$scope.logout2 = function() {
+				$http.post('api/logout', {}).success(function() {
+					$rootScope.authenticated = false;
+					console.log('Logout success');
+					$location.path("/");
+				}).error(function(data) {
+					console.log('Logout failed')
+					$rootScope.authenticated = false;
+				});
+			}
+			
 			/*
 			var authenticate = function(credentials, callback) {
 
