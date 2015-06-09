@@ -79,10 +79,11 @@ angular.module('hello', [ 'ngRoute' ]).config(function($routeProvider, $httpProv
 
             };
             
-            
+            $scope.newUser = {};
 			$scope.addDefaultUser = function() {
                 var data = {username : 'Pawel'}
                 return $http.post('addUser', data).success(function (response) {
+                	$scope.newUser = data;
 					console.log('Default user added');
                 }).error(function() {
 					console.log('Cannot add user');

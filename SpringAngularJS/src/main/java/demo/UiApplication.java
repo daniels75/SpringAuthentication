@@ -60,12 +60,6 @@ public class UiApplication {
 		@Autowired
 	    private AjaxLogoutSuccessHandler ajaxLogoutSuccessHandler;		
 	    
-		@Autowired
-	    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-	        auth
-	            .inMemoryAuthentication()
-	                .withUser("daniels").password("123").roles("USER","TESTER");
-	    }
 	    
 		@Override
 		protected void configure(HttpSecurity http) throws Exception {
@@ -87,94 +81,69 @@ public class UiApplication {
 					.antMatchers("/index.html", "/home.html", "/login.html", "/").permitAll().anyRequest()
 					.authenticated()
 			.and().csrf()
-					.csrfTokenRepository(csrfTokenRepository1())
+					.csrfTokenRepository(csrfTokenRepository())
 			.and()
-					.addFilterAfter(csrfHeaderFilter1(), CsrfFilter.class);
+					.addFilterAfter(csrfHeaderFilter(), CsrfFilter.class);
 					
 		
 		}
 
-		private Filter csrfHeaderFilter1() {
-			return new OncePerRequestFilter() {
-				@Override
-				protected void doFilterInternal(HttpServletRequest request,
-						HttpServletResponse response, FilterChain filterChain)
-						throws ServletException, IOException {
-					CsrfToken csrf = (CsrfToken) request.getAttribute(CsrfToken.class
-							.getName());
-					if (csrf != null) {
-						Cookie cookie = WebUtils.getCookie(request, "XSRF-TOKEN");
-						String token = csrf.getToken();
-						if (cookie == null || token != null
-								&& !token.equals(cookie.getValue())) {
-							cookie = new Cookie("XSRF-TOKEN", token);
-							cookie.setPath("/");
-							response.addCookie(cookie);
-						}
-					}
-					filterChain.doFilter(request, response);
-				}
-			};
-		}
 
-		private CsrfTokenRepository csrfTokenRepository1() {
-			HttpSessionCsrfTokenRepository repository = new HttpSessionCsrfTokenRepository();
-			repository.setHeaderName("X-XSRF-TOKEN");
-			return repository;
-		}
 	}
+	
 
+	
 	@Configuration
 	@Order(2)
 	public static class BasicAuthSecurityConfigurationAdapter extends
 			WebSecurityConfigurerAdapter {
-		
-		@Autowired
-		public void configureGlobal(AuthenticationManagerBuilder auth)
-				throws Exception {
-			auth.inMemoryAuthentication().withUser("daniels").password("123")
-					.roles("USER", "TESTER");
-		}
 
 		protected void configure(HttpSecurity http) throws Exception {
 
 			// check hello.js greeting GET method
 			http.authorizeRequests().antMatchers("/greeting").authenticated()
 					.and().httpBasic().and().csrf()
-					.csrfTokenRepository(csrfTokenRepository2()).and()
-					.addFilterAfter(csrfHeaderFilter2(), CsrfFilter.class);
+					.csrfTokenRepository(csrfTokenRepository()).and()
+					.addFilterAfter(csrfHeaderFilter(), CsrfFilter.class);
 		}
 		
-		private  Filter csrfHeaderFilter2() {
-			return new OncePerRequestFilter() {
-				@Override
-				protected void doFilterInternal(HttpServletRequest request,
-						HttpServletResponse response, FilterChain filterChain)
-						throws ServletException, IOException {
-					CsrfToken csrf = (CsrfToken) request
-							.getAttribute(CsrfToken.class.getName());
-					if (csrf != null) {
-						Cookie cookie = WebUtils.getCookie(request, "XSRF-TOKEN");
-						String token = csrf.getToken();
-						if (cookie == null || token != null
-								&& !token.equals(cookie.getValue())) {
-							cookie = new Cookie("XSRF-TOKEN", token);
-							cookie.setPath("/");
-							response.addCookie(cookie);
-						}
-					}
-					filterChain.doFilter(request, response);
-				}
-			};
-		}
 
-		private  CsrfTokenRepository csrfTokenRepository2() {
-			HttpSessionCsrfTokenRepository repository = new HttpSessionCsrfTokenRepository();
-			repository.setHeaderName("X-XSRF-TOKEN");
-			return repository;
-		}
 	}
 
+	@Autowired
+	public void configureGlobal(AuthenticationManagerBuilder auth)
+			throws Exception {
+		auth.inMemoryAuthentication().withUser("daniels").password("123")
+				.roles("USER", "TESTER");
+	}
+	
+	private static  Filter csrfHeaderFilter() {
+		return new OncePerRequestFilter() {
+			@Override
+			protected void doFilterInternal(HttpServletRequest request,
+					HttpServletResponse response, FilterChain filterChain)
+					throws ServletException, IOException {
+				CsrfToken csrf = (CsrfToken) request
+						.getAttribute(CsrfToken.class.getName());
+				if (csrf != null) {
+					Cookie cookie = WebUtils.getCookie(request, "XSRF-TOKEN");
+					String token = csrf.getToken();
+					if (cookie == null || token != null
+							&& !token.equals(cookie.getValue())) {
+						cookie = new Cookie("XSRF-TOKEN", token);
+						cookie.setPath("/");
+						response.addCookie(cookie);
+					}
+				}
+				filterChain.doFilter(request, response);
+			}
+		};
+	}
 
+	private static CsrfTokenRepository csrfTokenRepository() {
+		HttpSessionCsrfTokenRepository repository = new HttpSessionCsrfTokenRepository();
+		repository.setHeaderName("X-XSRF-TOKEN");
+		return repository;
+	}
 
 }
