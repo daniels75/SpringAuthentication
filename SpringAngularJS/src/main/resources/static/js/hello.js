@@ -1,5 +1,9 @@
 angular.module('hello', [ 'ngRoute' ]).config(function($routeProvider, $httpProvider) {
 
+	$httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    //$httpProvider.defaults.xsrfCookieName = 'CSRF-TOKEN';
+    //$httpProvider.defaults.xsrfHeaderName = 'X-CSRF-TOKEN';
+	
 	$routeProvider.when('/', {
 		templateUrl : 'home.html',
 		controller : 'home'
@@ -8,18 +12,51 @@ angular.module('hello', [ 'ngRoute' ]).config(function($routeProvider, $httpProv
 		controller : 'navigation'
 	}).otherwise('/');
 
-	$httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
 
 }).controller(
 		'navigation',
 
 		function($rootScope, $scope, $http, $location, $route) {
-			
-			$scope.credentials = {};
+			$scope.greetingResult = {};
 			
 			$scope.tab = function(route) {
 				return $route.current && route === $route.current.controller;
 			};
+			
+			
+		    $scope.toggle = function() {
+		        console.log('toggle');
+		    }
+		    
+		    
+			$scope.simpleRetrieve = function() {
+				
+				console.log('greeting');
+				var username = 'daniels';
+				var password = '123';
+				
+				// try with incorrect credentials like: var password = '1234';
+				// restart server and open Chrome browser with incognito mode
+				var credentials = btoa(username + ":" + password);
+				var headers =  {
+					Authorization : "Basic " + credentials
+				};
+				
+				console.log('Credentials: ' + credentials);
+				
+				$http.get('greeting', {
+					headers : headers
+				}).success(function(data) {
+					$scope.greetingResult = data;
+					console.log('greeting ok. Result: ' + data)
+				}).error(function(result) {
+					$scope.greetingResult = 'Cannot retrieve data from greeting service - Unuthorized';
+					console.log('greeting failure')
+				});
+				
+				
+			};		
 
 			$scope.login2 = function(username, password) {
                 var data = 'j_username=' + encodeURIComponent(username) +
@@ -43,6 +80,17 @@ angular.module('hello', [ 'ngRoute' ]).config(function($routeProvider, $httpProv
             };
             
             
+			$scope.addDefaultUser = function() {
+                var data = {username : 'Pawel'}
+                return $http.post('addUser', data).success(function (response) {
+					console.log('Default user added');
+                }).error(function() {
+					console.log('Cannot add user');
+				});
+
+            };            
+            
+            
 			$scope.logout2 = function() {
 				$http.post('api/logout', {}).success(function() {
 					$rootScope.authenticated = false;
@@ -54,62 +102,25 @@ angular.module('hello', [ 'ngRoute' ]).config(function($routeProvider, $httpProv
 				});
 			}
 			
-			/*
-			var authenticate = function(credentials, callback) {
+			
+			var login3 = function(username, password) {
 
-				var headers = credentials ? {
-					authorization : "Basic "
-							+ btoa(credentials.username + ":"
-									+ credentials.password)
-				} : {};
+				var headers =  {
+						Authorization : "Basic "
+							+ btoa(username.username + ":"
+									+ password)
+				};
 
-				$http.get('user', {
+				$http.post('api/authentication', {
 					headers : headers
-				}).success(function(data) {
-					if (data.name) {
-						$rootScope.authenticated = true;
-					} else {
-						$rootScope.authenticated = false;
-					}
-					callback && callback($rootScope.authenticated);
+				}).success(function(response) {
+					console.log('success...');
 				}).error(function() {
-					$rootScope.authenticated = false;
-					callback && callback(false);
+					console.log('failure...');
 				});
 
-			}
-
+			};			
 			
-			authenticate();
-
-			$scope.credentials = {};
-			$scope.login = function() {
-				authenticate($scope.credentials, function(authenticated) {
-					if (authenticated) {
-						console.log("Login succeeded")
-						$location.path("/");
-						$scope.error = false;
-						$rootScope.authenticated = true;
-					} else {
-						console.log("Login failed")
-						$location.path("/login");
-						$scope.error = true;
-						$rootScope.authenticated = false;
-					}
-				})
-			};
-
-			$scope.logout = function() {
-				$http.post('logout', {}).success(function() {
-					$rootScope.authenticated = false;
-					$location.path("/");
-				}).error(function(data) {
-					console.log("Logout failed")
-					$rootScope.authenticated = false;
-				});
-			}
-			
-			*/
 
 		}).controller('home', function($scope, $http) {
 	$http.get('/resource/').success(function(data) {

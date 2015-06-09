@@ -1,10 +1,6 @@
 package demo;
 
 import java.io.IOException;
-import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.Filter;
@@ -17,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -37,34 +32,23 @@ import org.springframework.web.util.WebUtils;
 @RestController
 public class UiApplication {
 
+
     private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
     
-    @RequestMapping("/greeting")
-    public Greeting greeting(@RequestParam(value="name", defaultValue="World") String name) {
-        return new Greeting(counter.incrementAndGet(),
-                            String.format(template, name));
-    }
-    
-	@RequestMapping("/user")
-	public Principal user(Principal user) {
-		return user;
-	}
-
-	@RequestMapping("/resource")
-	public Map<String, Object> home() {
-		Map<String, Object> model = new HashMap<String, Object>();
-		model.put("id", UUID.randomUUID().toString());
-		model.put("content", "Hello World");
-		return model;
-	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(UiApplication.class, args);
 	}
 
+    @RequestMapping("/greeting")
+    public Greeting greeting(@RequestParam(value="name", defaultValue="World") String name) {
+        return new Greeting(counter.incrementAndGet(),
+                            String.format(template, name));
+    }
+	
 	@Configuration
-	@Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
+	@Order(1)
 	protected static class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		
 		@Autowired
@@ -100,19 +84,17 @@ public class UiApplication {
 	            .deleteCookies("JSESSIONID")
 	            .permitAll()	            
 			.and().authorizeRequests()
-					.antMatchers("/index.html", "/home.html", "/login.html", "/*").permitAll().anyRequest()
+					.antMatchers("/index.html", "/home.html", "/login.html", "/").permitAll().anyRequest()
 					.authenticated()
-			//.and().csrf().disable();
-			
 			.and().csrf()
-					.csrfTokenRepository(csrfTokenRepository())
+					.csrfTokenRepository(csrfTokenRepository1())
 			.and()
-					.addFilterAfter(csrfHeaderFilter(), CsrfFilter.class);
+					.addFilterAfter(csrfHeaderFilter1(), CsrfFilter.class);
 					
 		
 		}
 
-		private Filter csrfHeaderFilter() {
+		private Filter csrfHeaderFilter1() {
 			return new OncePerRequestFilter() {
 				@Override
 				protected void doFilterInternal(HttpServletRequest request,
@@ -135,11 +117,64 @@ public class UiApplication {
 			};
 		}
 
-		private CsrfTokenRepository csrfTokenRepository() {
+		private CsrfTokenRepository csrfTokenRepository1() {
 			HttpSessionCsrfTokenRepository repository = new HttpSessionCsrfTokenRepository();
 			repository.setHeaderName("X-XSRF-TOKEN");
 			return repository;
 		}
 	}
+
+	@Configuration
+	@Order(2)
+	public static class BasicAuthSecurityConfigurationAdapter extends
+			WebSecurityConfigurerAdapter {
+		
+		@Autowired
+		public void configureGlobal(AuthenticationManagerBuilder auth)
+				throws Exception {
+			auth.inMemoryAuthentication().withUser("daniels").password("123")
+					.roles("USER", "TESTER");
+		}
+
+		protected void configure(HttpSecurity http) throws Exception {
+
+			// check hello.js greeting GET method
+			http.authorizeRequests().antMatchers("/greeting").authenticated()
+					.and().httpBasic().and().csrf()
+					.csrfTokenRepository(csrfTokenRepository2()).and()
+					.addFilterAfter(csrfHeaderFilter2(), CsrfFilter.class);
+		}
+		
+		private  Filter csrfHeaderFilter2() {
+			return new OncePerRequestFilter() {
+				@Override
+				protected void doFilterInternal(HttpServletRequest request,
+						HttpServletResponse response, FilterChain filterChain)
+						throws ServletException, IOException {
+					CsrfToken csrf = (CsrfToken) request
+							.getAttribute(CsrfToken.class.getName());
+					if (csrf != null) {
+						Cookie cookie = WebUtils.getCookie(request, "XSRF-TOKEN");
+						String token = csrf.getToken();
+						if (cookie == null || token != null
+								&& !token.equals(cookie.getValue())) {
+							cookie = new Cookie("XSRF-TOKEN", token);
+							cookie.setPath("/");
+							response.addCookie(cookie);
+						}
+					}
+					filterChain.doFilter(request, response);
+				}
+			};
+		}
+
+		private  CsrfTokenRepository csrfTokenRepository2() {
+			HttpSessionCsrfTokenRepository repository = new HttpSessionCsrfTokenRepository();
+			repository.setHeaderName("X-XSRF-TOKEN");
+			return repository;
+		}
+	}
+
+
 
 }

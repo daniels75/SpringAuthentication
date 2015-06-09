@@ -6,3 +6,10 @@
 <div  ng-show="!authenticated">
 	<p>Login to see your greeting</p>
 </div>
+<div>
+	<button ng-click="simpleRetrieve()">Retrieve greeting</button>
+	<p>Result: {{greetingResult | json}}</p>
+</div>
+<div>
+	<button ng-click="addDefaultUser()">Add default User</button>
+</div>

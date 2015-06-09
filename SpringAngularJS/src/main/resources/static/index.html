@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html ng-app="hello">
 <head>
 <title>Hello AngularJS</title>
 <link
@@ -12,8 +12,8 @@
 </style>
 </head>
 
-<body ng-app="hello" ng-cloak class="ng-cloak">
-	<div ng-controller="navigation" class="container">
+<body ng-controller="navigation" ng-cloak class="ng-cloak">
+	<div class="container">
 		<ul class="nav nav-pills" role="tablist">
 			<li ng-class="{active:tab('home')}"><a href="#/">home</a></li>
 			<li><a href="#/login">login</a></li>
