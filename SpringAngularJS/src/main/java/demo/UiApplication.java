@@ -78,12 +78,14 @@ public class UiApplication {
 	            .deleteCookies("JSESSIONID")
 	            .permitAll()	            
 			.and().authorizeRequests()
-					.antMatchers("/index.html", "/home.html", "/login.html", "/").permitAll().anyRequest()
+					.antMatchers("/index.html", "/home.html", "/login.html", "/*").permitAll().anyRequest()
 					.authenticated()
-			.and().csrf()
-					.csrfTokenRepository(csrfTokenRepository())
-			.and()
-					.addFilterAfter(csrfHeaderFilter(), CsrfFilter.class);
+			.and().csrf().disable();
+			/*
+			.csrfTokenRepository(csrfTokenRepository()).and()
+			.addFilterAfter(csrfHeaderFilter(), CsrfFilter.class);
+			*/
+			
 			// logout doesn't work properly with csrf filter above
 			// disable csrf if you want logout and login action
 			// from AngularJS perspective which works properly
@@ -94,7 +96,7 @@ public class UiApplication {
 	}
 	
 
-	
+	/*
 	@Configuration
 	@Order(2)
 	public static class BasicAuthSecurityConfigurationAdapter extends
@@ -111,6 +113,7 @@ public class UiApplication {
 		
 
 	}
+	*/
 
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth)
