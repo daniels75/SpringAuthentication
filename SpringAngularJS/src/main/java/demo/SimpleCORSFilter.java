@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class SimpleCORSFilter implements Filter {
 
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-		
+
 		/*
 		 * 
 		 * Uncomment following code if you whant to call a GET or POST methods from AngularJS
@@ -33,6 +33,15 @@ public class SimpleCORSFilter implements Filter {
 		*/
 		
 		//response.setHeader("Access-Control-Allow-Headers", "x-requested-with");
+		
+		// this solution also works fine
+		/*
+		HttpServletResponse response = (HttpServletResponse) res;
+		response.setHeader("Access-Control-Allow-Origin", "http://localhost:9000");
+		response.setHeader("Access-Control-Allow-Headers", "x-requested-with, origin, content-type, accept");
+		*/
+		
+		
 		chain.doFilter(req, res);
 	}
 
