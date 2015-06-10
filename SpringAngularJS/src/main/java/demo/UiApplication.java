@@ -84,8 +84,10 @@ public class UiApplication {
 					.csrfTokenRepository(csrfTokenRepository())
 			.and()
 					.addFilterAfter(csrfHeaderFilter(), CsrfFilter.class);
-					
-		
+			// logout doesn't work properly with csrf filter above
+			// disable csrf if you want logout and login action
+			// from AngularJS perspective which works properly
+			// .and().csrf().disable();
 		}
 
 
