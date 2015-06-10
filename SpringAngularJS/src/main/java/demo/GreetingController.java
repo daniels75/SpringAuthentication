@@ -34,7 +34,8 @@ public class GreetingController {
 	public String addUser(@RequestBody UserDetails input) {
     	final String detials = "user: " + input.getUsername() + " password: " + input.getPassword();
 		System.out.println(detials);
-		return "{\"user\":\"" + input.getUsername() + "\"}";
+		String userName = input.getUsername() + counter.incrementAndGet();
+		return "{\"user\":\"" + userName + "\"}";
 	
 	}
     
